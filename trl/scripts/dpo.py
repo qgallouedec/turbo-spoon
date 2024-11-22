@@ -5,7 +5,7 @@ from accelerate import Accelerator
 
 def main(training_args):
     # Code to be run with accelerate launch
-    print(training_args, Accelerator().process_index)
+    print(training_args, "Process index:", Accelerator().process_index)
 
 
 def make_parser(subparsers=None):
