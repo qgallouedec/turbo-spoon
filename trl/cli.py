@@ -1,20 +1,35 @@
 import argparse
+import os
 import sys
-from trl.scripts.dpo import main as dpo_main
-from transformers import HfArgumentParser, TrainingArguments
+
+from accelerate.commands.launch import launch_command_parser, launch_command
+
+from trl.scripts.dpo import make_parser as make_dpo_parser
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="trl", description="A CLI tool for training and fine-tuning")
-    subparsers = parser.add_subparsers(dest="command", required=True, parser_class=HfArgumentParser)
+    parser = argparse.ArgumentParser("My CLI tool", usage="trl", allow_abbrev=False)
 
-    # 'dpo' subcommand
-    dpo_parser = subparsers.add_parser("dpo", help="Run the DPO training process", dataclass_types=TrainingArguments)
+    # Add the subparsers
+    subparsers = parser.add_subparsers(help="available commands", dest="command")
 
+    # Add the subparsers for every script
+    make_dpo_parser(subparsers)
+
+    # Parse the arguments
     args = parser.parse_args()
-    sys.argv = sys.argv[1:]  # Remove 'ts' from sys.argv
 
     if args.command == "dpo":
+        # Get the default args for the launch command
+        dpo_training_script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "scripts", "dpo.py")
+        args = launch_command_parser().parse_args([dpo_training_script])
 
-        (training_args,) = dpo_parser.parse_args_into_dataclasses()
-        dpo_main(training_args)
+        # Feed the args to the launch command
+        args.training_script_args = sys.argv[2:]  # remove "trl" and "dpo"
+
+        # Launch the training
+        launch_command(args)
+
+
+if __name__ == "__main__":
+    main()
